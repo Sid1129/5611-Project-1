@@ -1,8 +1,8 @@
-int numAgents = 4;
+int numAgents = 3;
 int maxNumAgents = 4;
 
-int numObstacles = 70;
-int numNodes  = 300;
+int numObstacles = 100;
+int numNodes  = 50;
 static int maxNumObstacles = 1000;
 static int maxNumNodes = 1000;
 Vec2 circlePos[] = new Vec2[maxNumObstacles]; //Circle positions
@@ -89,21 +89,43 @@ void setup(){
 
 // Compute attractive forces to draw agents to their goals,
 // and avoidance forces to anticipatory avoid collisions
+//void computeAgentForces(float dt){
+//  for(int id = 0; id < numAgents; id++){
+//    if(count[id] == paths[id].size()){
+//      return;
+//    }
+//    if(paths[id].get(count[id]) == -1){
+//      return;
+//    }
+//    println(nodePos[paths[id].get(count[id])]);
+//    println(paths[id]);
+//    agentVel[id] = nodePos[paths[id].get(count[id])].minus(agentPos[id]);
+//    agentPos[id].add(agentVel[id].times(1.3 * dt));
+//    //agentPos[id] = interpolate(agentPos[id], nodePos[paths[id].get(count[id])], .04);
+//    if(agentPos[id].distanceTo(nodePos[paths[id].get(count[id])]) <=1.5){
+//      agentPos[id] = nodePos[paths[id].get(count[id])];
+//      //println(agentPos[id].x + " " + agentPos[id].y);
+//      count[id]++;
+//    }
+//  }
+//  return;
+//}
+
 void computeAgentForces(float dt){
   for(int id = 0; id < numAgents; id++){
     if(count[id] == paths[id].size()){
-      return;
-    }
-    if(paths[id].get(count[id]) == -1){
-      return;
-    }
-    agentVel[id] = nodePos[paths[id].get(count[id])].minus(agentPos[id]);
-    agentPos[id].add(agentVel[id].times(1.3 * dt));
-    //agentPos[id] = interpolate(agentPos[id], nodePos[paths[id].get(count[id])], .04);
-    if(agentPos[id].distanceTo(nodePos[paths[id].get(count[id])]) <=1.5){
-      agentPos[id] = nodePos[paths[id].get(count[id])];
-      //println(agentPos[id].x + " " + agentPos[id].y);
-      count[id]++;
+
+    } else if(paths[id].get(count[id]) == -1){
+
+    } else {
+      agentVel[id] = nodePos[paths[id].get(count[id])].minus(agentPos[id]);
+      agentPos[id].add(agentVel[id].times(1.3 * dt));
+      //agentPos[id] = interpolate(agentPos[id], nodePos[paths[id].get(count[id])], .04);
+      if(agentPos[id].distanceTo(nodePos[paths[id].get(count[id])]) <=1.5){
+        agentPos[id] = nodePos[paths[id].get(count[id])];
+        //println(agentPos[id].x + " " + agentPos[id].y);
+        count[id]++;
+      }
     }
   }
   return;
@@ -133,20 +155,26 @@ void draw(){
     image(goalpost, nodePos[goalPos[i]].x, nodePos[goalPos[i]].y, 60, 60); 
   }
   
-  //  //Draw PRM Nodes
-  //fill(0);
-  //for (int i = 0; i < numNodes; i++){
-  //  circle(nodePos[i].x,nodePos[i].y,5);
-  //}
   
-  //  //Draw graph
+    //Draw graph
   //stroke(100,100,100);
   //strokeWeight(1);
   //for (int i = 0; i < numNodes; i++){
   //  for (int j : neighbors[i]){
+  //    if (j == numNodes || j == numNodes + 1) { continue; }
   //    line(nodePos[i].x,nodePos[i].y,nodePos[j].x,nodePos[j].y);
   //  }
   //}
+  
+    //Draw PRM Nodes
+  fill(0);
+  for (int i = 0; i < numNodes; i++){
+    if (i == numNodes - 1 || i == numNodes - 2) {
+      circle(nodePos[i].x,nodePos[i].y, 15);
+    } else {
+      circle(nodePos[i].x,nodePos[i].y,5);
+    }
+  }
   
   //computeAgentForces(1/frameRate);
    
