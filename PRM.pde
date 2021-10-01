@@ -1,4 +1,5 @@
 import java.util.PriorityQueue;
+import java.util.Collections;
 
 //You will only be turning in this file
 //Your solution will be graded based on it's runtime (smaller is better), 
@@ -89,6 +90,8 @@ void connectStartAndGoal(Vec2[] centers, float[] radii, int numObstacles, Vec2[]
   Vec2[] startAndEnd = new Vec2[2];
   startAndEnd[0] = start;
   startAndEnd[1] = goal;
+  
+  // connect the start and goal to the nodes
   for (int i = 0; i < 2; i++){
     neighbors[numNodes+i] = new ArrayList<Integer>();  //Clear neighbors list
     for (int j = 0; j < numNodes; j++){
@@ -101,6 +104,32 @@ void connectStartAndGoal(Vec2[] centers, float[] radii, int numObstacles, Vec2[]
       }
     }
   }
+  
+  // connect the nodes to the start and goal
+  for (int i = 0; i < numNodes; i++){
+    for (int j = 0; j < 2; j++){
+      if (i == j) continue; //don't connect to myself 
+      Vec2 dir = startAndEnd[j].minus(nodePos[i]).normalized();
+      float distBetween = nodePos[i].distanceTo(startAndEnd[j]);
+      hitInfo circleListCheck = rayCircleListIntersect(centers, radii, numObstacles, startAndEnd[j], dir, distBetween, eps);
+      if (!circleListCheck.hit){
+        neighbors[i].add(numNodes+j);
+      }
+    }
+  }
+}
+
+ArrayList<Integer> findPath(Node n) {
+  ArrayList<Integer> path = new ArrayList();
+  
+  while (n != null) {
+    path.add(n.ID);
+    n = n.parent;
+  }
+  
+  Collections.reverse(path);
+  
+  return path;
 }
 
 ArrayList<Integer> planPath(int startPos, int goalPos, Vec2[] centers, float[] radii, int numObstacles, Vec2[] nodePos, int numNodes){
@@ -109,27 +138,33 @@ ArrayList<Integer> planPath(int startPos, int goalPos, Vec2[] centers, float[] r
   //int startID = closestNode(startPos, nodePos, numNodes, centers, radii, numObstacles, 30, 0);
   //int goalID = closestNode(goalPos, nodePos, numNodes, centers, radii, numObstacles, 30, 0);
   
-  //connectStartAndGoal(centers, radii, numObstacles, nodePos, numNodes, startPos, goalPos);
-  ////println(neighbors);
+  connectStartAndGoal(centers, radii, numObstacles, nodePos, numNodes, nodePos[startPos], nodePos[goalPos]);
+  //println(neighbors);
   
-  //for(int i = 0; i < numNodes; i++){  //make numNodes +2 if we include start and goal nodes
-  //  nodeList.add(i, new Node(i, nodePos[i].distanceTo(goalPos), 0.0, 0.0));
-  //  //println(nodeList.get(i));
-  //}
-  //nodeList.add(numNodes, new Node(numNodes, startPos.distanceTo(goalPos), 0.0, 0.0));   //start node
-  //nodeList.add(numNodes+1, new Node(numNodes+1, 0.0, 0.0, 0.0));                       // goal node
-  ////println(nodeList.get(numNodes));
-  ////println(nodeList.get(numNodes+1));
+  for(int i = 0; i < numNodes; i++){  //make numNodes +2 if we include start and goal nodes
+    nodeList.add(i, new Node(i, nodePos[i].distanceTo(nodePos[goalPos]), 0.0, 0.0));
+    //println(nodeList.get(i));
+  }
+   
+  nodeList.add(numNodes, new Node(startPos, nodePos[startPos].distanceTo(nodePos[goalPos]), 0.0, 0.0));   //start node
+  nodeList.add(numNodes+1, new Node(goalPos, 0.0, 0.0, 0.0));                       // goal node
+  //println(nodeList.get(numNodes));
+  //println(nodeList.get(numNodes+1));
   
   //Vec2[] newnodePos = new Vec2[numNodes+2];
   //for(int i = 0; i < numNodes; i++){  
   //  newnodePos[i] = nodePos[i];
   //}
-  //newnodePos[numNodes] = startPos;
-  //newnodePos[numNodes+1] = goalPos;
+  //newnodePos[numNodes] = nodePos[startPos];
+  //newnodePos[numNodes+1] = nodePos[goalPos];
   
-  //Node temp = runAStar(newnodePos, numNodes);
-  path = runBFS(nodePos, numNodes, startPos, goalPos);
+  //println(nodePos[startPos]);
+  //println(nodePos[goalPos]);
+  
+  Node temp = runAStar(numNodes);
+  path = findPath(temp);
+  println(path);
+  //path = runBFS(nodePos, numNodes, startPos, goalPos);
   
   return path;
 }
@@ -191,39 +226,89 @@ ArrayList<Integer> runBFS(Vec2[] nodePos, int numNodes, int startID, int goalID)
 
 
 
-Node runAStar(Vec2[] newnodePos, int numNodes) {
-  PriorityQueue<Node> open = new PriorityQueue<>();
-  PriorityQueue<Node> close = new PriorityQueue<>();
+//Node runAStar(Vec2[] newnodePos, int numNodes) {
+//  PriorityQueue<Node> open = new PriorityQueue<>();
+//  PriorityQueue<Node> close = new PriorityQueue<>();
   
-  //nodeList.get(numNodes).f = nodeList.get(numNodes).h;
-  open.add(nodeList.get(numNodes));
-  while(!open.isEmpty()){
-    println(open);
-    Node temp = open.poll();
-    close.add(temp);
-    //println(temp.ID);
-    if(temp.ID == (nodeList.get(numNodes+1)).ID){
-      println(temp);
-      return temp;
+//  //nodeList.get(numNodes).f = nodeList.get(numNodes).h;
+//  open.add(nodeList.get(numNodes));
+//  while(!open.isEmpty()){
+//    println(open);
+//    Node temp = open.poll();
+//    close.add(temp);
+//    //println(temp.ID);
+//    if(temp.ID == (nodeList.get(numNodes+1)).ID){
+//      println("Found!! ");
+//      println(temp);
+//      return temp;
+//    }
+//    for(int i = 0; i < neighbors[temp.ID].size() ; i++){
+//      Node edge = nodeList.get(neighbors[temp.ID].get(i));
+//      float totalCost = temp.g + newnodePos[temp.ID].distanceTo(newnodePos[edge.ID]) + edge.h;
+//      if(close.contains(edge) && (totalCost >= edge.g)){
+//        continue;
+//      } else if(!open.contains(edge) || (totalCost < edge.g)){
+//        if (close.contains(edge)) {
+//           close.remove(edge);
+//         }
+//         edge.parent = temp;
+//         edge.g = totalCost;
+//         if(open.contains(edge)){
+//             open.remove(edge);
+//         }
+//         open.add(edge);
+//      }
+//    }
+//  }
+//  println("Nothing found");
+//  return null;
+//}
+
+Node runAStar(int numNodes){
+    PriorityQueue<Node> closedList = new PriorityQueue<>();
+    PriorityQueue<Node> openList = new PriorityQueue<>();
+
+    println(neighbors[nodeList.get(numNodes+1).ID]);
+    
+    openList.add(nodeList.get(numNodes));
+
+    while(!openList.isEmpty()){
+        println(openList);
+        println(openList.size());
+        Node n = openList.peek();
+        if(n.ID == (nodeList.get(numNodes+1)).ID){
+           println("Found!! ");
+           return n;
+         }
+
+        for(int i = 0; i < neighbors[n.ID].size() ; i++){
+            Node m = nodeList.get(neighbors[n.ID].get(i));
+            println(m);
+            float totalWeight = n.g + m.g;
+
+            if(!openList.contains(m) && !closedList.contains(m)){
+                m.parent = n;
+                m.g = totalWeight;
+                m.f = m.g + m.h;
+                openList.add(m);
+            } else {
+                if(totalWeight < m.g){
+                    m.parent = n;
+                    m.g = totalWeight;
+                    m.f = m.g + m.h;
+
+                    if(closedList.contains(m)){
+                        closedList.remove(m);
+                        openList.add(m);
+                    }
+                }
+            }
+        }
+
+        openList.remove(n);
+        closedList.add(n);
     }
-    for(int i = 0; i < neighbors[temp.ID].size() ; i++){
-      Node edge = nodeList.get(neighbors[temp.ID].get(i));
-      float totalCost = temp.g + newnodePos[temp.ID].distanceTo(newnodePos[edge.ID]) + edge.h;
-      if(close.contains(edge) && (totalCost >= edge.g)){
-        continue;
-      } else if(!open.contains(edge) || (totalCost < edge.g)){
-        if (close.contains(edge)) {
-           close.remove(edge);
-         }
-         edge.parent = temp;
-         edge.g = totalCost;
-         if(open.contains(edge)){
-             open.remove(edge);
-         }
-         open.add(edge);
-      }
-  }
-  }
-  println("Nothing found");
-  return null;
+    println("Nothing found");
+    return null;
 }
+
